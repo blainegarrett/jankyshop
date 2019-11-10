@@ -8,9 +8,9 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 import Typography from '@material-ui/core/Typography';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
-import ToolsetMenu from './ToolsetMenu';
-import ToolSetDrawer from './ToolSetDrawer';
-import EditorContent from './canvas';
+import ToolsetMenu from '../src/ToolsetMenu';
+import ToolSetDrawer from '../src/ToolSetDrawer';
+import EditorContent from '../src//canvas';
 
 const drawerWidth = 240;
 

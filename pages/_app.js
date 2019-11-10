@@ -4,16 +4,16 @@ import { StylesProvider, ThemeProvider } from '@material-ui/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import GlobalStyles from '../src/theming/GlobalStyles';
 import theme from '../src/theming/theme';
-import AppContextProvider from '../src/contexts/AppContext';
+//import AppContextProvider from '../src/contexts/AppContext';
 
 import { Provider as ReduxProvider } from 'react-redux';
-import withReduxStore from '../src/redux/withReduxStore';
-import analytics from '../src/analytics';
+//import withReduxStore from '../src/redux/withReduxStore';
+//import analytics from '../src/analytics';
 
-class App extends NextApp {
+export default class App extends NextApp {
   componentDidMount() {
     // Initialize Google Analytics
-    analytics.init();
+    //analytics.init();
 
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector('#jss-server-side');
@@ -23,7 +23,7 @@ class App extends NextApp {
   }
 
   render() {
-    const { Component, pageProps, reduxStore } = this.props;
+    const { Component, pageProps } = this.props;
     return (
       <React.Fragment>
         {/* Wrap every page in Styles and Theme providers */}
@@ -35,16 +35,10 @@ class App extends NextApp {
             <CssBaseline />
             <GlobalStyles />
 
-            <ReduxProvider store={reduxStore}>
-              <AppContextProvider>
-                <Component {...pageProps} />
-              </AppContextProvider>
-            </ReduxProvider>
+            <Component {...pageProps} />
           </ThemeProvider>
         </StylesProvider>
       </React.Fragment>
     );
   }
 }
-
-export default withReduxStore(App);
