@@ -1,0 +1,50 @@
+{
+  "name": "jankyshop",
+  "version": "v1.0.0",
+  "description": "Experimental Image Editor",
+  "main": "server.js",
+  "dependencies": {
+    "@material-ui/core": "^4.5.0",
+    "@material-ui/icons": "^4.5.1",
+    "@material-ui/styles": "^4.5.0",
+    "axios": "^0.19.0",
+    "clsx": "^1.0.4",
+    "express": "^4.17.1",
+    "lodash.isequal": "^4.5.0",
+    "moment-timezone": "^0.5.26",
+    "next": "^9.1.1",
+    "prismjs": "^1.17.1",
+    "prop-types": "^15.7.2",
+    "react": "^16.10.2",
+    "react-dom": "^16.10.2",
+    "react-ga": "^2.7.0",
+    "react-redux": "^5.1.2",
+    "redux": "^3.6.0",
+    "redux-devtools-extension": "^2.13.2",
+    "redux-thunk": "^2.1.0",
+    "reselect": "^3.0.1"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.3",
+    "eslint": "^5.15.1",
+    "eslint-plugin-react": "^7.16.0",
+    "eslint-plugin-react-hooks": "^1.7.0"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "build": "next build",
+    "start": "node server.js",
+    "start-local": "NODE_ENV=production PORT=8080 node server.js",
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://blainegarrett@github.com/blainegarrett/jankyshop.git"
+  },
+  "author": "Blaine Garrett",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/blainegarrett/jankyshop/issues"
+  },
+  "homepage": "https://github.com/blainegarrett/jankyshop#readme"
+}
