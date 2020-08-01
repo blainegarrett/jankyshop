@@ -6,7 +6,7 @@ import GlobalStyles from '../src/theming/GlobalStyles';
 import theme from '../src/theming/theme';
 //import AppContextProvider from '../src/contexts/AppContext';
 
-import { Provider as ReduxProvider } from 'react-redux';
+//import { Provider as ReduxProvider } from 'react-redux';
 //import withReduxStore from '../src/redux/withReduxStore';
 //import analytics from '../src/analytics';
 

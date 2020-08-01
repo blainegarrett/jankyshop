@@ -1,7 +1,6 @@
 // Jankyshop backend for auth, etc
 const express = require('express');
 const next = require('next');
-const compression = require('compression');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -15,7 +14,7 @@ app
   .prepare()
   .then(() => {
     const server = express();
-    server.use(compression());
+
 
     // Robots.txt
     server.get('/robots.txt', function(req, res) {
