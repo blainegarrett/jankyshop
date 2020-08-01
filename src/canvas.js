@@ -82,6 +82,20 @@ export default function EditorContent({ command }) {
     var x,
       y = 0;
 
+    for (x = 0; x * grid_size <= w; x++) {
+      grid_coords[x] = [];
+      for (y = 0; y * grid_size <= h; y++) {
+        grid_coords[x].push([x * grid_size, y * grid_size]);
+      }
+    }
+    return grid_coords;
+  }
+
+  function generateGrid2(w, h, grid_size) {
+    var grid_coords = [];
+    var x,
+      y = 0;
+
     for (x = 0; x <= w; x += grid_size) {
       for (y = 0; y <= h; y += grid_size) {
         grid_coords.push([x, y]);
@@ -100,34 +114,29 @@ export default function EditorContent({ command }) {
     var gridData = gridCtx.getImageData(0, 0, w, h);
     var pixels = gridData.data;
 
+    // TODO: Don't use vars scoped to file...
     globalGridCoords = generateGrid(w, h, grid_size);
 
-    let coords = globalGridCoords;
-    let coord;
-
-    let x, y;
-
-    for (let i = 0; i < globalGridCoords.length; i++) {
-      coord = coords[i];
-      x = coord[0];
-      y = coord[1];
-      var index = y * w * 4 + x * 4; //(y*w + x)*4;
-      pixels[index + 0] = 0;
-      pixels[index + 1] = 0;
-      pixels[index + 2] = 0;
-      pixels[index + 3] = 255;
+    let i, j;
+    for (i = 0; i < globalGridCoords.length; i++) {
+      for (j = 0; j < globalGridCoords[i].length; j++) {
+        let coord = globalGridCoords[i][j];
+        var index = coord[1] * w * 4 + coord[0] * 4; //(y*w + x)*4;
+        pixels[index + 0] = 0;
+        pixels[index + 1] = 0;
+        pixels[index + 2] = 0;
+        pixels[index + 3] = 255;
+      }
     }
 
-    if (drawIt) {
-      gridCtx.putImageData(gridData, 0, 0); // at coords 0,0
+    //if (drawIt) {
+    gridCtx.putImageData(gridData, 0, 0); // at coords 0,0
 
-      // Place circles centered around dots
-      for (let i = 0; i < coords.length; i++) {
-        coord = coords[i];
-        x = coord[0];
-        y = coord[1];
+    for (i = 0; i < globalGridCoords.length; i++) {
+      for (j = 0; j < globalGridCoords[i].length; j++) {
+        let coord = globalGridCoords[i][j];
         gridCtx.beginPath();
-        gridCtx.arc(x, y, 2, 0, Math.PI * 2, true);
+        gridCtx.arc(coord[0], coord[1], 2, 0, Math.PI * 2, true);
         gridCtx.stroke();
       }
     }
@@ -149,11 +158,11 @@ export default function EditorContent({ command }) {
       'https://storage.googleapis.com/cdn.mplsart.com/file_container/RmlsZUNvbnRhaW5lch4fMTEzODAwMDE/card_large.png';
     //sourceLoaderDom.src =
     //  'https://storage.googleapis.com/cdn.mplsart.com/blainestuff/blaine_mosaic2.jpg';
-    //sourceLoaderDom.src =
-    //  'https://storage.googleapis.com/cdn.mplsart.com/blainestuff/blaine_face.jpg';
     sourceLoaderDom.src =
-      'https://storage.googleapis.com/cdn.mplsart.com/blainestuff/about_wedding.jpg';
-    //sourceLoaderDom.src = 'http://localhost:3000/static/testImages/pictor.png';
+      'https://storage.googleapis.com/cdn.mplsart.com/blainestuff/blaine_face.jpg';
+    //sourceLoaderDom.src =
+    //  'https://storage.googleapis.com/cdn.mplsart.com/blainestuff/about_wedding.jpg';
+    //sourceLoaderDom.src = 'http://localhost:3333/static/testImages/pictor.png';
 
     renderGrid(true);
 
@@ -246,6 +255,13 @@ export default function EditorContent({ command }) {
         polyCtx: polyCanvasRef.current.getContext('2d'),
         value: command.value
       });
+    } else if (command.id === 'wierd') {
+      adjust.wierd(w, h, data, {
+        globalGridCoords,
+        sourceCtx: resultCanvasRef.current.getContext('2d'),
+        polyCtx: polyCanvasRef.current.getContext('2d'),
+        value: command.value
+      });
     }
 
     resultCanvasRef.current.getContext('2d').putImageData(data, 0, 0); // at coords 0,0
@@ -256,11 +272,11 @@ export default function EditorContent({ command }) {
       <div className={classes.jankyTools}>
         Layers:
         <input
-          checked={layers.showSourceLayer}
+          checked={layers.showGridLayer}
           type="checkbox"
-          onChange={toggleVisibility('showSourceLayer')}
+          onChange={toggleVisibility('showGridLayer')}
         />
-        Source -
+        Grid -
         <input
           checked={layers.showPolyLayer}
           type="checkbox"
@@ -278,7 +294,13 @@ export default function EditorContent({ command }) {
           type="checkbox"
           onChange={toggleVisibility('showResultLayer')}
         />
-        resultCanvasRef
+        Result
+        <input
+          checked={layers.showSourceLayer}
+          type="checkbox"
+          onChange={toggleVisibility('showSourceLayer')}
+        />
+        Source
       </div>
 
       <div className={classes.container}>
@@ -294,6 +316,7 @@ export default function EditorContent({ command }) {
             ref={sourceCanvasRef}
             id="source"
             style={{
+              zIndex: 500,
               display: layers.showSourceLayer ? 'inline-block' : 'none'
             }}
             //onClick={e => {
@@ -307,28 +330,38 @@ export default function EditorContent({ command }) {
             //  });
             //}}
           />
-
           <canvas
-            ref={gridCanvasRef}
-            id="grid-canvas"
-            style={{ display: layers.showGridLayer ? 'inline-block' : 'none' }}
+            ref={polyCanvasRef}
+            id="poly_canvas"
+            style={{
+              zIndex: 503,
+              display: layers.showPolyLayer ? 'inline-block' : 'none'
+            }}
           />
           <canvas
             ref={resultCanvasRef}
             id="result_canvas"
             style={{
+              zIndex: 502,
               display: layers.showResultLayer ? 'inline-block' : 'none'
             }}
           />
-          <canvas
-            ref={polyCanvasRef}
-            id="poly_canvas"
-            style={{ display: layers.showPolyLayer ? 'inline-block' : 'none' }}
-          />
+
           <canvas
             ref={utilCanvasRef}
             id="utils_canvas"
-            style={{ display: layers.showUtilLayer ? 'inline-block' : 'none' }}
+            style={{
+              zIndex: 501,
+              display: layers.showUtilLayer ? 'inline-block' : 'none'
+            }}
+          />
+          <canvas
+            ref={gridCanvasRef}
+            id="grid-canvas"
+            style={{
+              zIndex: 504,
+              display: layers.showGridLayer ? 'inline-block' : 'none'
+            }}
           />
         </div>
       </div>

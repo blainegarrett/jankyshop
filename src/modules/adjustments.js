@@ -1,3 +1,7 @@
+// Resources
+// https://github.com/kig/canvasfilters/blob/master/filters.js
+//
+
 function getColorAtOffset(x, y, sourceCtx) {
   var p = sourceCtx.getImageData(x, y, 1, 1).data;
   return p;
@@ -10,6 +14,35 @@ function euclidian_distance(r1, g1, b1, r2, g2, b2) {
 
   //console.log(d);
   return d;
+}
+
+function changeSinContrast(par) {
+  var dPow = 4;
+  var iMid = 128;
+
+  if (par > 0 && par < iMid) {
+    par = Math.sin(Math.PI * ((90 - par / dPow) / 180)) * par;
+  } else if (par >= iMid) {
+    par = Math.sin(Math.PI * ((90 - (256 - par) / dPow) / 180)) * par;
+  }
+
+  return par;
+}
+
+function processHrdEffect(w, h, sourceData) {
+  // get current image data
+
+  //var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (var i = 0; i < sourceData.data.length; i += 4) {
+    sourceData.data[i + 0] = changeSinContrast(sourceData.data[i + 0]);
+
+    sourceData.data[i + 1] = changeSinContrast(sourceData.data[i + 1]);
+
+    sourceData.data[i + 2] = changeSinContrast(sourceData.data[i + 2]);
+  }
+
+  // put image data back to context
+  //ctx.putImageData(imageData, 0, 0);
 }
 
 export function brightness(w, h, sourceData, adjustment) {
@@ -53,6 +86,21 @@ export function invert(w, h, imgData) {
     imgData.data[i + 3] = 255;
   }
   return imgData;
+}
+
+function luminance(w, h, sourceData) {
+  var dst = sourceData.data;
+  var d = sourceData.data;
+  for (var i = 0; i < d.length; i += 4) {
+    var r = d[i];
+    var g = d[i + 1];
+    var b = d[i + 2];
+    // CIE luminance for the RGB
+    var v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    dst[i] = dst[i + 1] = dst[i + 2] = v;
+    dst[i + 3] = d[i + 3];
+  }
+  return dst;
 }
 
 export function greyscale(w, h, sourceData) {
@@ -148,6 +196,80 @@ export function quantize(w, h, sourceData) {
     }
   }
 }
+function verticalFlip(w, h, sourceData) {
+  var dst = sourceData.data;
+  var d = sourceData.data;
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var off = (y * w + x) * 4;
+      var dstOff = ((h - y - 1) * w + x) * 4;
+      dst[dstOff] = d[off];
+      dst[dstOff + 1] = d[off + 1];
+      dst[dstOff + 2] = d[off + 2];
+      dst[dstOff + 3] = d[off + 3];
+    }
+  }
+  return dst;
+}
+function horizontalFlip(w, h, sourceData) {
+  var dst = sourceData.data;
+  var d = sourceData.data;
+  for (var y = 0; y < h; y++) {
+    for (var x = 0; x < w; x++) {
+      var off = (y * w + x) * 4;
+      var dstOff = (y * w + (w - x - 1)) * 4;
+      dst[dstOff] = d[off];
+      dst[dstOff + 1] = d[off + 1];
+      dst[dstOff + 2] = d[off + 2];
+      dst[dstOff + 3] = d[off + 3];
+    }
+  }
+  return dst;
+}
+
+export function wierd(
+  w,
+  h,
+  sourceData,
+  { globalGridCoords, sourceCtx, polyCtx, value }
+) {
+  return luminance(w, h, sourceData);
+  return verticalFlip(w, h, sourceData);
+  return horizontalFlip(w, h, sourceData);
+  return processHrdEffect(w, h, sourceData);
+
+  let threshold = value;
+  let grid_size = 50;
+  //var pixels = sourceData.data;
+
+  polyCtx.clearRect(0, 0, w, h);
+
+  let i, j, x, y;
+
+  for (i = 0; i < globalGridCoords.length; i++) {
+    for (j = 0; j < globalGridCoords[i].length; j++) {
+      let coord = globalGridCoords[i][j];
+      x = coord[0];
+      y = coord[1];
+      var av = getColorAtOffset(x, y, sourceCtx);
+      let fillColor = 'rgb(' + av[0] + ',' + av[1] + ',' + av[2] + ', 1)';
+      polyCtx.beginPath();
+      polyCtx.lineTo(x, y);
+      polyCtx.lineTo(x + grid_size, y);
+      polyCtx.lineTo(x + grid_size, y + grid_size);
+      polyCtx.lineTo(x, y + grid_size);
+      polyCtx.fillStyle = fillColor;
+
+      polyCtx.strokeStyle = 'rgb(100,100,100, 0.1)';
+      polyCtx.lineWidth = 1;
+
+      polyCtx.fill();
+      polyCtx.stroke();
+
+      //drawCircle(sourceCtx, polyCtx, x, y, r, '#000000');
+    }
+  }
+}
 
 export function halftone(
   w,
@@ -165,31 +287,68 @@ export function halftone(
   //brightness(w, h, sourceData, threshold);
 
   //var polyData = polyCtx.getImageData(0, 0, w, h);
+  let i, j, v, x, y;
+  for (i = 0; i < globalGridCoords.length; i++) {
+    for (j = 0; j < globalGridCoords[i].length; j++) {
+      let coord = globalGridCoords[i][j];
 
-  for (var p = 0; p < globalGridCoords.length; p++) {
-    let coord = globalGridCoords[p];
-    //let x1 = p[0];
-    //let x2 = p[0] + grid_size;
-    //let y2 = p[1];
-    //let y1 = p[1] + grid_size;
+      x = coord[0] + Math.floor(grid_size / 2);
+      y = coord[1] + Math.floor(grid_size / 2);
 
-    // Get color at px
-    let x = coord[0] + Math.floor(grid_size / 2);
-    let y = coord[1] + Math.floor(grid_size / 2);
-    var pixels = getColorAtOffset(x, y, sourceCtx);
+      // Get color at px
+      var pixels = getColorAtOffset(x, y, sourceCtx);
 
-    var factor = pixels[0] * 0.3 + pixels[1] * 0.59 + pixels[2] * 0.11;
-    //var value = factor > threshold_value ? 255 : 0; // threshold
+      var factor = pixels[0] * 0.3 + pixels[1] * 0.59 + pixels[2] * 0.11;
+      //var value = factor > threshold_value ? 255 : 0; // threshold
 
-    let v = 255 - threshold;
-    if (v > 500) {
-      v = 255;
+      v = 255 - threshold;
+      if (v > 500) {
+        v = 255;
+      }
+
+      let r = ((v - factor) * (grid_size / 2)) / v;
+
+      if (r > 0) {
+        drawCircle(sourceCtx, polyCtx, x, y, r, '#000000');
+      }
     }
+  }
+}
 
-    let r = ((v - factor) * (grid_size / 2)) / v;
+export function coolMosaic2(
+  w,
+  h,
+  sourceData,
+  { globalGridCoords, sourceCtx, polyCtx, value }
+) {
+  polyCtx.clearRect(0, 0, w, h);
+  let grid_size = 50;
+  let r = 2 * grid_size;
+  let x = 0;
+  let y = 0;
 
-    if (r > 0) {
-      drawCircle(sourceCtx, polyCtx, x, y, r, '#000000');
+  let n = 2; //Math.floor(w / grid_size);
+  //let z = 0;
+  let i, j;
+  for (i = 0; i < globalGridCoords.length; i++) {
+    for (j = 0; j < globalGridCoords[i].length; j++) {
+      let coord = globalGridCoords[i][j];
+      x = coord[0];
+      y = coord[1];
+
+      if (x == 0 && i % n !== 0) {
+        //z += n + n; /// 2;
+      } else {
+        //z += n;
+        //z += n * 2;
+      }
+
+      drawDiamond(sourceCtx, polyCtx, x, y, r);
+      drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 2 - 5);
+      console.log(value);
+      if (i % value == 0) {
+        drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 6);
+      }
     }
   }
 }
@@ -206,25 +365,31 @@ export function coolMosaic(
   let x = 0;
   let y = 0;
 
-  let n = 2; //Math.floor(w / grid_size);
-  let i;
-  let z = 0;
-  for (i = 0; i < globalGridCoords.length; i = z) {
-    x = globalGridCoords[i][0];
-    y = globalGridCoords[i][1];
+  //let z = 0;
+  let i, j, z;
+  for (i = 0; i < globalGridCoords.length; i++) {
+    let even_row = i % 2 == 0;
+    let even_column = false;
 
-    if (x == 0 && i % n !== 0) {
-      //z += n + n; /// 2;
-    } else {
-      z += n;
-      //z += n * 2;
-    }
+    //z = i % 2 == 0 ? 0 : 1; //start odd or even
+    //
+    //
+    z = 0;
 
-    drawDiamond(sourceCtx, polyCtx, x, y, r);
-    drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 2 - 5);
-    console.log(value);
-    if (i % value == 0) {
-      drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 6);
+    for (j = z; j < globalGridCoords[i].length; j++) {
+      even_column = j % 2 == 0;
+      let coord = globalGridCoords[i][j];
+      x = coord[0];
+      y = coord[1];
+      //console.log([x, y]);
+
+      if (even_row & !even_column || !even_row & even_column) {
+        drawDiamond(sourceCtx, polyCtx, x, y, r);
+        drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 2 - 5);
+        if (i % value == 0) {
+          drawCircle(sourceCtx, polyCtx, x, y + r / 2, grid_size / 6);
+        }
+      }
     }
   }
 }
@@ -233,7 +398,7 @@ function drawDiamond(sourceCtx, polyCtx, x, y, r, color) {
   // Draw a quadralateral with top at x,y with width of r
 
   var av = getColorAtOffset(x, y, sourceCtx);
-  let fillColor = 'rgb(' + av[0] + ',' + av[1] + ',' + av[2] + ', 0.99)';
+  let fillColor = 'rgb(' + av[0] + ',' + av[1] + ',' + av[2] + ', 1)';
 
   // Triangle math
   polyCtx.beginPath();
@@ -242,6 +407,10 @@ function drawDiamond(sourceCtx, polyCtx, x, y, r, color) {
   polyCtx.lineTo(x, y + r);
   polyCtx.lineTo(x - r / 2, y + r / 2);
   polyCtx.fillStyle = fillColor;
+
+  polyCtx.strokeStyle = 'rgb(100,100,100, 0.1)';
+  polyCtx.lineWidth = 1;
+
   polyCtx.fill();
   polyCtx.stroke();
 }
@@ -285,5 +454,6 @@ export default {
   threshold,
   halftone,
   brightness,
-  coolMosaic
+  coolMosaic,
+  wierd
 };

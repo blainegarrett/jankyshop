@@ -10,7 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import ToolsetMenu from '../src/ToolsetMenu';
 import ToolSetDrawer from '../src/ToolSetDrawer';
-import EditorContent from '../src//canvas';
+import EditorContent from '../src/canvas';
 
 const drawerWidth = 240;
 

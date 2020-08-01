@@ -94,11 +94,11 @@ let experimentOptions = [
     }
   },
   {
-    id: 'coolstuff',
-    label: 'Cool Stuff',
-    icon: <MailIcon />,
-    onChange: () => {
-      console.log('cooooolstuff');
+    id: 'wierd',
+    label: 'Wierd',
+    type: 'slider',
+    onChange: value => {
+      return { type: 'COMMAND', id: 'wierd', value: value };
     }
   }
 ];
