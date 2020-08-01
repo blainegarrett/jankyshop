@@ -1,13 +1,11 @@
-// Jankyshop backend for auth, etc
+/* eslint-disable @typescript-eslint/no-var-requires */
+// Main Entry point of app
 const express = require('express');
 const next = require('next');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
-
 const handle = app.getRequestHandler();
-
-// GAE passes the port the app will run on via process.env.PORT
 const port = process.env.PORT ? process.env.PORT : 3000;
 
 app
@@ -15,30 +13,24 @@ app
   .then(() => {
     const server = express();
 
-
-    // Robots.txt
-    server.get('/robots.txt', function(req, res) {
-      res.type('text/plain');
-      res.send('User-agent: *\nDisallow: /admin/\nDisallow: /api/');
+    // Handle Service Worker
+    server.get('/service-worker.js', (_req, res) => {
+      res.status(200).sendFile('/service-worker.js', { root: `${__dirname}/build/` });
     });
 
-    // Favicon
-    server.get('/favicon.ico', (req, res) =>
-      res.status(200).sendFile('favicon.ico', { root: __dirname + '/static/' })
-    );
+    // Legacy Favicon Url
+    server.get('/favicon.ico', (_req, res) => res.status(200).sendFile('favicon.ico', { root: `${__dirname}/public/static/` }));
 
-    server.get('*', (req, res) => {
-      return handle(req, res);
-    });
+    // Route Everything else through Next.js directly
+    server.all('*', (req, res) => handle(req, res));
 
-    server.listen(port, err => {
-      if (err) throw err;
-      console.log(
-        `> Ready on http://localhost:${port} NODE_ENV: ${process.env.NODE_ENV}`
-      );
+    server.listen(port, () => {
+      // eslint-disable-next-line no-console
+      console.log(`> Ready on http://localhost:${port}`);
     });
   })
-  .catch(ex => {
+  .catch((ex) => {
+    // eslint-disable-next-line no-console
     console.error(ex.stack);
     process.exit(1);
   });
