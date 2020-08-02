@@ -24,7 +24,7 @@ build:
 
 .PHONY: deploy
 deploy:
-	gcloud --verbosity=debug --project janky-shop app deploy ./app.yaml --version $(filter-out $@,$(MAKECMDGOALS))
+	gcloud --verbosity=debug --project blaine-garrett app deploy ./app.yaml --version $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: test
 test:

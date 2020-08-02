@@ -5,6 +5,24 @@ const withOffline = require('next-offline');
 
 const nextConfig = {
   distDir: 'build',
+  async rewrites() {
+    return [
+      {
+        source: '/favicon.ico',
+        destination: '/static/favicon.ico',
+      },
+      {
+        source: '/service-worker.js',
+        // destination: '/build/service-worker.js', 
+        // destination: '/_next/service-worker.js',
+        destination: '/_next/static/service-worker.js',        
+      },
+    ];
+  },
+  workboxOpts: {
+    swDest: './static/service-worker.js',
+  },
+
   serverRuntimeConfig: {},
   publicRuntimeConfig: {
     // Will be available on both server and client

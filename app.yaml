@@ -1,6 +1,6 @@
 runtime: nodejs10
 
-service: default
+service: janky-shop
 handlers:
 - url: /.*
   script: auto
